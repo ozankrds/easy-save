@@ -18,7 +18,10 @@ public partial class Form1 : Form
         AutoSize = true
     };
 
+    public string[] selectedFilePaths { get; private set; } = [];
+
     public string? destinationDirectory { get; private set; }
+
 
     public Form1()
     {
@@ -38,13 +41,22 @@ public partial class Form1 : Form
             AutoSize = true
         };
 
+        var backupButton = new Button
+        {
+            Text = "Backup",
+            Location = new(20, 320),
+            AutoSize = true
+        };
+
         chooseFilesButton.Click += ChooseFilesButton_Click;
         chooseDirectoryButton.Click += ChooseDirectoryButton_Click;
+        backupButton.Click += BackupButton_Click;
 
         Controls.Add(chooseFilesButton);
         Controls.Add(selectedFilesListBox);
         Controls.Add(chooseDirectoryButton);
         Controls.Add(destinationLabel);
+        Controls.Add(backupButton);
     }
 
     private void ChooseFilesButton_Click (object? sender, EventArgs e)
@@ -60,6 +72,7 @@ public partial class Form1 : Form
             return;
         }
 
+        selectedFilePaths = dialog.FileNames;
         selectedFilesListBox.Items.Clear();
 
         foreach (string path in dialog.FileNames)
@@ -76,6 +89,26 @@ public partial class Form1 : Form
         {
             destinationDirectory = dialog.SelectedPath;
             destinationLabel.Text = destinationDirectory;
+        }
+    }
+
+    private void BackupButton_Click(object? sender, EventArgs e)
+    {
+        if (selectedFilePaths.Length == 0 || destinationDirectory is null)
+        {
+            MessageBox.Show("Choose file(s) and destination first");
+            return;
+        }
+
+        try
+        {
+            var service = new BackupService();
+            string folder = service.CreateBackup(selectedFilePaths, destinationDirectory);
+            MessageBox.Show($"Backup created: {folder}");
+        } 
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Backup failed: {ex.Message}");
         }
     }
 }
